@@ -48,6 +48,9 @@ def run(cap, arducam_utils):
             frame = frame.reshape(int(h), int(w))
 
         frame = arducam_utils.convert(frame)
+        
+        if do_flip:
+            frame = cv2.rotate(frame, cv2.ROTATE_180)
 
         encoding = "bgr8" if len(frame.shape) == 3 and frame.shape[2] >= 3 else "mono8"
 
@@ -148,6 +151,11 @@ if __name__ == "__main__":
     except:
         frame_id = "cam0"
 
+    try:
+        do_flip = rospy.get_param("~flip")
+    except:
+        do_flip = False
+        
     try:
         left_info_url = rospy.get_param("~left/camera_info_url")
         right_info_url = rospy.get_param("~right/camera_info_url")
