@@ -35,6 +35,9 @@ def run(cap, arducam_utils):
     left_pub = rospy.Publisher('left/image_raw', Image, queue_size=10)
     right_pub = rospy.Publisher('right/image_raw', Image, queue_size=10)
 
+    left_compressed_pub = rospy.Publisher('left/image_compressed', Image, queue_size=10)
+    right_compressed_pub = rospy.Publisher('right/image_compressed', Image, queue_size=10)
+    
     left_info_pub = rospy.Publisher('left/camera_info', CameraInfo, queue_size=10)
     right_info_pub = rospy.Publisher('right/camera_info', CameraInfo, queue_size=10)
 
@@ -74,6 +77,18 @@ def run(cap, arducam_utils):
         left_pub.publish(left_img_msg)
         right_pub.publish(right_img_msg)
 
+        left_compressed_img_msg = bridge.cv2_to_compressed_imgmsg(left_img, "png")
+        left_compressed_img_msg.header.frame_id = frame_id
+
+        right_compressed_img_msg = bridge.cv2_to_compressed_imgmsg(right_img, "png")
+        right_compressed_img_msg.header.frame_id = frame_id
+
+        left_compressed_img_msg.header.stamp = capture_time
+        right_compressed_img_msg.header.stamp = capture_time
+
+        left_compressed_pub.publish(left_compressed_img_msg)
+        right_compressed_pub.publish(right_compressed_img_msg)
+                
         info_left = left_info_mgr.getCameraInfo()
         info_right = right_info_mgr.getCameraInfo()
 
