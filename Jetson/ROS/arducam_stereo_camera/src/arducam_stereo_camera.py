@@ -11,7 +11,7 @@ from utils import ArducamUtils
 
 import rospy
 from cv_bridge import CvBridge, CvBridgeError
-from sensor_msgs.msg import Image, CameraInfo
+from sensor_msgs.msg import Image, CompressedImage, CameraInfo
 from camera_info_manager import CameraInfoManager
 
 
@@ -32,11 +32,11 @@ def run(cap, arducam_utils):
     left_info_mgr.loadCameraInfo()
     right_info_mgr.loadCameraInfo()
 
-    left_pub = rospy.Publisher('left/image_raw', Image, queue_size=10)
-    right_pub = rospy.Publisher('right/image_raw', Image, queue_size=10)
+    left_pub = rospy.Publisher('left/image', Image, queue_size=10)
+    right_pub = rospy.Publisher('right/image', Image, queue_size=10)
 
-    left_compressed_pub = rospy.Publisher('left/image_compressed', Image, queue_size=10)
-    right_compressed_pub = rospy.Publisher('right/image_compressed', Image, queue_size=10)
+    left_compressed_pub = rospy.Publisher('left/image/compressed', CompressedImage, queue_size=10)
+    right_compressed_pub = rospy.Publisher('right/image/compressed', CompressedImage, queue_size=10)
     
     left_info_pub = rospy.Publisher('left/camera_info', CameraInfo, queue_size=10)
     right_info_pub = rospy.Publisher('right/camera_info', CameraInfo, queue_size=10)
