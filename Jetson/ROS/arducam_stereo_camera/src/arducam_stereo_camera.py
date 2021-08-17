@@ -1,12 +1,8 @@
 #!/usr/bin/env python
 
 import cv2
-import numpy as np
-from datetime import datetime
-import array
-import fcntl
-import os
 import argparse
+import subprocess
 from utils import ArducamUtils
 
 import rospy
@@ -25,10 +21,10 @@ def run(cap, arducam_utils):
 
     left_info_mgr = CameraInfoManager(cname='left_camera', namespace='left')
     right_info_mgr = CameraInfoManager(cname='right_camera', namespace='right')
-    
+
     left_info_mgr.setURL(left_info_url)
     right_info_mgr.setURL(right_info_url)
-    
+
     left_info_mgr.loadCameraInfo()
     right_info_mgr.loadCameraInfo()
 
@@ -37,7 +33,7 @@ def run(cap, arducam_utils):
 
     left_compressed_pub = rospy.Publisher('left/image/compressed', CompressedImage, queue_size=10)
     right_compressed_pub = rospy.Publisher('right/image/compressed', CompressedImage, queue_size=10)
-    
+
     left_info_pub = rospy.Publisher('left/camera_info', CameraInfo, queue_size=10)
     right_info_pub = rospy.Publisher('right/camera_info', CameraInfo, queue_size=10)
 
@@ -51,7 +47,7 @@ def run(cap, arducam_utils):
             frame = frame.reshape(int(h), int(w))
 
         frame = arducam_utils.convert(frame)
-        
+
         if do_flip:
             frame = cv2.rotate(frame, cv2.ROTATE_180)
 
@@ -88,7 +84,7 @@ def run(cap, arducam_utils):
 
         left_compressed_pub.publish(left_compressed_img_msg)
         right_compressed_pub.publish(right_compressed_img_msg)
-                
+
         info_left = left_info_mgr.getCameraInfo()
         info_right = right_info_mgr.getCameraInfo()
 
@@ -97,10 +93,10 @@ def run(cap, arducam_utils):
 
         info_left.header.frame_id = frame_id
         info_right.header.frame_id = frame_id
-        
+
         left_info_pub.publish(info_left)
         right_info_pub.publish(info_right)
-        
+
     pass
 
 
@@ -128,9 +124,27 @@ if __name__ == "__main__":
     rospy.init_node("arducam_stereo_camera")
 
     try:
-        device = rospy.get_param("~device")
+        device = int(rospy.get_param("~device"))
     except:
         device = 0
+
+    try:
+        framerate = int(rospy.get_param("~framerate"))
+    except:
+        framerate = False
+    if framerate:
+        #v4l2-ctl -c frame_rate=X
+        command = "v4l2-ctl -d /dev/video{1} -c frame_rate={0}".format(framerate, device)
+        subprocess.call(command, shell=True)
+
+    try:
+        exposure = int(rospy.get_param("~exposure"))
+    except:
+        exposure = False
+    if exposure:
+        #v4l2-ctl -c exposure=1000
+        command = "v4l2-ctl -d /dev/video{1} -c exposure_auto={0}".format(exposure, device)
+        subprocess.call(command, shell=True)
 
     # open camera
     cap = cv2.VideoCapture(device, cv2.CAP_V4L2)
@@ -149,7 +163,7 @@ if __name__ == "__main__":
     # turn off RGB conversion
     if arducam_utils.convert2rgb == 0:
         cap.set(cv2.CAP_PROP_CONVERT_RGB, arducam_utils.convert2rgb)
-    
+
     try:
         width = rospy.get_param("~width")
         # set width
@@ -170,7 +184,7 @@ if __name__ == "__main__":
         do_flip = rospy.get_param("~flip")
     except:
         do_flip = False
-        
+
     try:
         left_info_url = rospy.get_param("~left/camera_info_url")
         right_info_url = rospy.get_param("~right/camera_info_url")
