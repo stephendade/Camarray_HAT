@@ -143,7 +143,7 @@ if __name__ == "__main__":
         exposure = False
     if exposure:
         #v4l2-ctl -c exposure=1000
-        command = "v4l2-ctl -d /dev/video{1} -c exposure_auto={0}".format(exposure, device)
+        command = "v4l2-ctl -d /dev/video{1} -c exposure={0}".format(exposure, device)
         subprocess.call(command, shell=True)
 
     # open camera
