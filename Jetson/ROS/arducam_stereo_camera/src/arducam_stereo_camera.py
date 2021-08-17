@@ -38,8 +38,29 @@ def run(cap, arducam_utils):
     right_info_pub = rospy.Publisher('right/camera_info', CameraInfo, queue_size=10)
 
     bridge = CvBridge()
+    
+    #Need to run camera for a bit to set the registers
+    for i in range(0, 10):
+        ret, frame = cap.read()
+        try:
+            framerate = int(rospy.get_param("~framerate"))
+        except:
+            framerate = False
+        if framerate:
+            #v4l2-ctl -c frame_rate=X
+            command = "v4l2-ctl -d /dev/video{1} -c frame_rate={0}".format(framerate, device)
+            subprocess.call(command, shell=True)
 
-    while not rospy.is_shutdown():
+        try:
+            exposure = int(rospy.get_param("~exposure"))
+        except:
+            exposure = False
+        if exposure:
+            #v4l2-ctl -c exposure=1000
+            command = "v4l2-ctl -d /dev/video{1} -c exposure={0}".format(exposure, device)
+            subprocess.call(command, shell=True)    
+
+    while not rospy.is_shutdown():      
         ret, frame = cap.read()
         if arducam_utils.convert2rgb == 0:
             w = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
@@ -127,24 +148,6 @@ if __name__ == "__main__":
         device = int(rospy.get_param("~device"))
     except:
         device = 0
-
-    try:
-        framerate = int(rospy.get_param("~framerate"))
-    except:
-        framerate = False
-    if framerate:
-        #v4l2-ctl -c frame_rate=X
-        command = "v4l2-ctl -d /dev/video{1} -c frame_rate={0}".format(framerate, device)
-        subprocess.call(command, shell=True)
-
-    try:
-        exposure = int(rospy.get_param("~exposure"))
-    except:
-        exposure = False
-    if exposure:
-        #v4l2-ctl -c exposure=1000
-        command = "v4l2-ctl -d /dev/video{1} -c exposure={0}".format(exposure, device)
-        subprocess.call(command, shell=True)
 
     # open camera
     cap = cv2.VideoCapture(device, cv2.CAP_V4L2)
