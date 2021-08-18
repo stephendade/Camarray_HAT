@@ -28,11 +28,11 @@ def run(cap, arducam_utils):
     left_info_mgr.loadCameraInfo()
     right_info_mgr.loadCameraInfo()
 
-    left_pub = rospy.Publisher('left/image', Image, queue_size=10)
-    right_pub = rospy.Publisher('right/image', Image, queue_size=10)
+    left_pub = rospy.Publisher('left/image_raw', Image, queue_size=10)
+    right_pub = rospy.Publisher('right/image_raw', Image, queue_size=10)
 
-    left_compressed_pub = rospy.Publisher('left/image/compressed', CompressedImage, queue_size=10)
-    right_compressed_pub = rospy.Publisher('right/image/compressed', CompressedImage, queue_size=10)
+    left_compressed_pub = rospy.Publisher('left/image_raw/compressed', CompressedImage, queue_size=10)
+    right_compressed_pub = rospy.Publisher('right/image_raw/compressed', CompressedImage, queue_size=10)
 
     left_info_pub = rospy.Publisher('left/camera_info', CameraInfo, queue_size=10)
     right_info_pub = rospy.Publisher('right/camera_info', CameraInfo, queue_size=10)
