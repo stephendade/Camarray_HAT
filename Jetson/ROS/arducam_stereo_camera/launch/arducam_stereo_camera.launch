@@ -5,7 +5,7 @@
         <arg name="height" value="400" />
         <arg name="device" value="0" />
         <arg name="frame_id" value="cam0" /> <!--Topic frame_id. -->
-        <arg name="pixelformat" value="GREY" />
+        <arg name="pixelformat" value="GREY" /> <!--Can be "GREY", "Y10" or "Y16" -->
         <arg name="flip" value=False />
         <arg name="framerate" value="30" />
         <arg name="exposure" value="681" />

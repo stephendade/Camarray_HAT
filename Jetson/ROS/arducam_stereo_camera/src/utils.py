@@ -65,18 +65,9 @@ VIDIOC_W_DEV = _IOWR('V', BASE_VIDIOC_PRIVATE + 3, arducam_dev)
 
 class ArducamUtils(object):
     pixfmt_map = {
-        v4l2.V4L2_PIX_FMT_SBGGR10:{ "depth":10, "cvt_code": cv2.COLOR_BAYER_RG2BGR, "convert2rgb": 0},
-        v4l2.V4L2_PIX_FMT_SGBRG10:{ "depth":10, "cvt_code": cv2.COLOR_BAYER_GR2BGR, "convert2rgb": 0},
-        v4l2.V4L2_PIX_FMT_SGRBG10:{ "depth":10, "cvt_code": cv2.COLOR_BAYER_GB2BGR, "convert2rgb": 0},
-        v4l2.V4L2_PIX_FMT_SRGGB10:{ "depth":10, "cvt_code": cv2.COLOR_BAYER_BG2BGR, "convert2rgb": 0},
         v4l2.V4L2_PIX_FMT_Y10:{ "depth":10, "cvt_code": -1, "convert2rgb": 0},
-    }
-
-    pixfmt_map_raw8 = {
-        v4l2.V4L2_PIX_FMT_SBGGR8:{ "depth":8, "cvt_code": cv2.COLOR_BAYER_RG2BGR, "convert2rgb": 0},
-        v4l2.V4L2_PIX_FMT_SGBRG8:{ "depth":8, "cvt_code": cv2.COLOR_BAYER_GR2BGR, "convert2rgb": 0},
-        v4l2.V4L2_PIX_FMT_SGRBG8:{ "depth":8, "cvt_code": cv2.COLOR_BAYER_GB2BGR, "convert2rgb": 0},
-        v4l2.V4L2_PIX_FMT_SRGGB8:{ "depth":8, "cvt_code": cv2.COLOR_BAYER_BG2BGR, "convert2rgb": 0},
+        v4l2.V4L2_PIX_FMT_GREY:{ "depth":8, "cvt_code": -1, "convert2rgb": 0},
+        v4l2.V4L2_PIX_FMT_Y16:{ "depth":16, "cvt_code": -1, "convert2rgb": 0}
     }
 
     AUTO_CONVERT_TO_RGB = { "depth":-1, "cvt_code": -1, "convert2rgb": 1}
@@ -160,8 +151,11 @@ class ArducamUtils(object):
     def convert(self, frame):
         if self.convert2rgb == 1:
             return frame
-        
-        if self.depth != -1:
+
+        if self.depth == 16:
+            frame = frame.astype(np.uint16)
+
+        elif self.depth != -1:
             frame = cv2.convertScaleAbs(frame, None, 256.0 / (1 << self.depth))
             frame = frame.astype(np.uint8)
 
@@ -180,12 +174,10 @@ class ArducamUtils(object):
     def get_pixfmt_cfg(self):
         ret, pixfmt = self.get_pixelformat()
 
-        pf = ArducamUtils.pixfmt_map_raw8.get(pixfmt, None)
+        pf = ArducamUtils.pixfmt_map.get(pixfmt, None)
         if pf != None:
             return pf
 
-        if pixfmt != v4l2.V4L2_PIX_FMT_Y16:
-            return ArducamUtils.AUTO_CONVERT_TO_RGB
         fmtdesc = v4l2.v4l2_fmtdesc()
         fmtdesc.index = 0
         fmtdesc.type = v4l2.V4L2_BUF_TYPE_VIDEO_CAPTURE

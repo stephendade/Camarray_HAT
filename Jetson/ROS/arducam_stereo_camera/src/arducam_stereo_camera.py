@@ -62,6 +62,7 @@ def run(cap, arducam_utils):
 
     while not rospy.is_shutdown():      
         ret, frame = cap.read()
+
         if arducam_utils.convert2rgb == 0:
             w = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
             h = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
@@ -72,7 +73,12 @@ def run(cap, arducam_utils):
         if do_flip:
             frame = cv2.rotate(frame, cv2.ROTATE_180)
 
-        encoding = "bgr8" if len(frame.shape) == 3 and frame.shape[2] >= 3 else "mono8"
+        if len(frame.shape) == 3 and frame.shape[2] >= 3:
+            encoding= "bgr8"
+        elif frame.dtype == 'uint16':
+            encoding="mono16"
+        else:
+            encoding="mono8"
 
         width = frame.shape[1]
         height = frame.shape[0]
@@ -94,10 +100,10 @@ def run(cap, arducam_utils):
         left_pub.publish(left_img_msg)
         right_pub.publish(right_img_msg)
 
-        left_compressed_img_msg = bridge.cv2_to_compressed_imgmsg(left_img, "png")
+        left_compressed_img_msg = bridge.cv2_to_compressed_imgmsg(left_img, "jpg")
         left_compressed_img_msg.header.frame_id = frame_id
 
-        right_compressed_img_msg = bridge.cv2_to_compressed_imgmsg(right_img, "png")
+        right_compressed_img_msg = bridge.cv2_to_compressed_imgmsg(right_img, "jpg")
         right_compressed_img_msg.header.frame_id = frame_id
 
         left_compressed_img_msg.header.stamp = capture_time
@@ -163,6 +169,7 @@ if __name__ == "__main__":
     arducam_utils = ArducamUtils(device)
 
     show_info(arducam_utils)
+
     # turn off RGB conversion
     if arducam_utils.convert2rgb == 0:
         cap.set(cv2.CAP_PROP_CONVERT_RGB, arducam_utils.convert2rgb)
@@ -175,6 +182,7 @@ if __name__ == "__main__":
         height = rospy.get_param("~height")
         # set height
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+
     except:
         pass
 
