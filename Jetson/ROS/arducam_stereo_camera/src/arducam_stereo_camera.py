@@ -7,7 +7,7 @@ from utils import ArducamUtils
 
 import rospy
 from cv_bridge import CvBridge, CvBridgeError
-from sensor_msgs.msg import Image, CompressedImage, CameraInfo
+from sensor_msgs.msg import Image, CameraInfo
 from camera_info_manager import CameraInfoManager
 
 
@@ -31,38 +31,38 @@ def run(cap, arducam_utils):
     left_pub = rospy.Publisher('left/image_raw', Image, queue_size=10)
     right_pub = rospy.Publisher('right/image_raw', Image, queue_size=10)
 
-    left_compressed_pub = rospy.Publisher('left/image_raw/compressed', CompressedImage, queue_size=10)
-    right_compressed_pub = rospy.Publisher('right/image_raw/compressed', CompressedImage, queue_size=10)
-
     left_info_pub = rospy.Publisher('left/camera_info', CameraInfo, queue_size=10)
     right_info_pub = rospy.Publisher('right/camera_info', CameraInfo, queue_size=10)
 
     bridge = CvBridge()
-    
+
+    try:
+        framerate = int(rospy.get_param("~framerate"))
+    except:
+        framerate = False
+    try:
+        exposure = int(rospy.get_param("~exposure"))
+    except:
+        exposure = False
+                 
     #Need to run camera for a bit to set the registers
     for i in range(0, 10):
         ret, frame = cap.read()
-        try:
-            framerate = int(rospy.get_param("~framerate"))
-        except:
-            framerate = False
+
         if framerate:
             #v4l2-ctl -c frame_rate=X
             command = "v4l2-ctl -d /dev/video{1} -c frame_rate={0}".format(framerate, device)
             subprocess.call(command, shell=True)
 
-        try:
-            exposure = int(rospy.get_param("~exposure"))
-        except:
-            exposure = False
         if exposure:
             #v4l2-ctl -c exposure=1000
             command = "v4l2-ctl -d /dev/video{1} -c exposure={0}".format(exposure, device)
-            subprocess.call(command, shell=True)    
+            subprocess.call(command, shell=True)
 
     while not rospy.is_shutdown():      
         ret, frame = cap.read()
-
+        capture_time = rospy.Time.now()
+        
         if arducam_utils.convert2rgb == 0:
             w = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
             h = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
@@ -92,25 +92,11 @@ def run(cap, arducam_utils):
         right_img_msg = bridge.cv2_to_imgmsg(right_img, encoding)
         right_img_msg.header.frame_id = frame_id
 
-        capture_time = rospy.Time.now()
-
         left_img_msg.header.stamp = capture_time
         right_img_msg.header.stamp = capture_time
 
         left_pub.publish(left_img_msg)
         right_pub.publish(right_img_msg)
-
-        left_compressed_img_msg = bridge.cv2_to_compressed_imgmsg(left_img, "jpg")
-        left_compressed_img_msg.header.frame_id = frame_id
-
-        right_compressed_img_msg = bridge.cv2_to_compressed_imgmsg(right_img, "jpg")
-        right_compressed_img_msg.header.frame_id = frame_id
-
-        left_compressed_img_msg.header.stamp = capture_time
-        right_compressed_img_msg.header.stamp = capture_time
-
-        left_compressed_pub.publish(left_compressed_img_msg)
-        right_compressed_pub.publish(right_compressed_img_msg)
 
         info_left = left_info_mgr.getCameraInfo()
         info_right = right_info_mgr.getCameraInfo()
@@ -123,7 +109,6 @@ def run(cap, arducam_utils):
 
         left_info_pub.publish(info_left)
         right_info_pub.publish(info_right)
-
     pass
 
 
