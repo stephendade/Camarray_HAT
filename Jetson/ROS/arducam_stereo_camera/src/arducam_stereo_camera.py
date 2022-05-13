@@ -86,6 +86,10 @@ def run(cap, arducam_utils):
         left_img = frame[:, :width//2]
         right_img = frame[:, width//2:]
 
+        if half_res:
+            left_img = cv2.resize(left_img, None, fx= 0.5, fy= 0.5, interpolation= cv2.INTER_AREA)
+            right_img = cv2.resize(right_img, None, fx= 0.5, fy= 0.5, interpolation= cv2.INTER_AREA)
+            
         left_img_msg = bridge.cv2_to_imgmsg(left_img, encoding)
         left_img_msg.header.frame_id = frame_id
 
@@ -181,6 +185,11 @@ if __name__ == "__main__":
     except:
         do_flip = False
 
+    try:
+        half_res = rospy.get_param("~half_res")
+    except:
+        half_res = False
+        
     try:
         left_info_url = rospy.get_param("~left/camera_info_url")
         right_info_url = rospy.get_param("~right/camera_info_url")
